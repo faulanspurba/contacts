@@ -4,7 +4,7 @@ const { validationResult } = require("express-validator"),
   fs = require("fs");
 
 exports.contacts = (req, res, next) => {
-  const current_page = req.query.page || 1,
+  const page = 1,
     per_page = req.query.perPage || 5;
   let total_contacts;
 
@@ -47,7 +47,7 @@ exports.create_contact = (req, res, next) => {
 
   const { name, email, phone_number } = req.body,
     image = req.file.path;
-    console.log(req.file)
+  console.log(req.file);
 
   const contacts = new Contact({
     name,
