@@ -4,8 +4,8 @@ const { validationResult } = require("express-validator"),
   fs = require("fs");
 
 exports.contacts = (req, res, next) => {
-  const page = 1,
-    per_page = req.query.perPage || 5;
+  const page = req.query.page || 1,
+    per_page = 5;
   let total_contacts;
 
   Contact.find()
@@ -13,41 +13,64 @@ exports.contacts = (req, res, next) => {
     .then((contact) => {
       total_contacts = contact;
       return Contact.find()
-        .skip((current_page - 1) * per_page)
+        .skip((page - 1) * per_page)
         .limit(per_page);
     })
-    .then((contact) => {
-      res.status(200).json({
-        message: "Getting All Datas is success",
-        data: contact,
-        current_page,
+    .then((contacts) => {
+      res.status(200).render("contact", {
+        title: "Contacts",
+        layout: "layouts/main",
+        contacts,
+        page,
         per_page,
         total_contacts,
+        msg: req.flash("msg"),
       });
+      // res.status(200).json({
+      //   message: "Getting All Datas is success",
+      //   data: contacts,
+      //   page,
+      //   per_page,
+      //   total_contacts,
+      // });
     })
     .catch((err) => next(err));
+};
+
+exports.add_contact_view = (req, res, next) => {
+  res.status(200).render("add_data", {
+    title: "Add Data",
+    layout: "layouts/main",
+  });
 };
 
 exports.create_contact = (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    const err = new Error(`Something error in your input`);
-    err.status = 400;
-    err.data = errors.array();
-    throw err;
+    // const err = new Error(`Something error in your input`);
+    // err.status = 400;
+    // err.data = errors.array();
+    // throw err;
+
+    res.render("add_data", {
+      title: "Add Data",
+      layout: "layouts/main",
+      errors: errors.array(),
+    });
+
+    return;
   }
 
   if (!req.file) {
     const err = new Error(`Something error in your input`);
     err.status = 400;
-
+    err.data = " Error pada bagian req.file";
     throw err;
   }
 
   const { name, email, phone_number } = req.body,
-    image = req.file.path;
-  console.log(req.file);
+    image = req.file.filename;
 
   const contacts = new Contact({
     name,
@@ -58,10 +81,12 @@ exports.create_contact = (req, res, next) => {
   contacts
     .save()
     .then((result) => {
-      res.status(201).json({
-        message: "Creating App is Success",
-        data: result,
-      });
+      req.flash("msg", `Adding ${result.name} was successful!`);
+      res.status(201).redirect("contacts");
+      // res.status(201).json({
+      //   message: "Creating App is Success",
+      //   data: result,
+      // });
     })
     .catch((err) => console.log("err: ", err));
 };
@@ -132,7 +157,7 @@ exports.delete_contact = (req, res, next) => {
     .catch((err) => next(err));
 
   const removeImage = (img) => {
-    fs.unlink(path.join(`${__dirname}/../../${img}`), (err) =>
+    fs.unlink(path.join(`${__dirname}/../../image/${img}`), (err) =>
       console.log(err)
     );
   };

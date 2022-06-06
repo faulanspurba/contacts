@@ -1,6 +1,8 @@
-const app = require("express")();
-const mongoose = require("mongoose");
-const multer = require("multer");
+const express = require("express"),
+  app = express(),
+  path = require("path"),
+  mongoose = require("mongoose"),
+  multer = require("multer");
 
 const bodyParser = require("body-parser");
 app.use(bodyParser.json());
@@ -10,8 +12,14 @@ app.use(
   })
 );
 
-const ejs = require("ejs"),
-  expressejslayouts = require("express-ejs-layouts");
+app.use("/images", express.static(path.join(__dirname, "images")));
+
+const methodOverride = require("method-override");
+app.use(methodOverride("_method"));
+
+app.set("view engine", "ejs");
+const expressLayouts = require("express-ejs-layouts");
+app.use(expressLayouts);
 
 // SAVING THE IMAGE
 const storage = multer.diskStorage({
@@ -33,7 +41,26 @@ const fileFilter = (req, file, cb) => {
 
 app.use(multer({ storage, fileFilter }).single("image"));
 
+// MODELS
 const contact = require("./src/routes/contact");
+
+// FLASH MESSAGE
+const session = require("express-session");
+const cookieParser = require("cookie-parser");
+const flash = require("connect-flash");
+// Konfigurasi flash
+app.use(cookieParser("secret"));
+app.use(
+  session({
+    cookie: {
+      maxAge: 6000,
+      secret: "secret",
+      resave: true,
+      saveUninitialized: true,
+    },
+  })
+);
+app.use(flash());
 
 app.use("/v1/user", contact);
 
@@ -50,7 +77,7 @@ app.use((error, req, res, next) => {
 
 mongoose
   .connect(
-    "mongodb+srv://Contact-App:E28udskg7bG9Vyx8@cluster0.7y59w.mongodb.net/Contact?retryWrites=true&w=majority"
+    "mongodb+srv://admin1:RM2D8gcD57lQO8Xu@cluster0.h8jyz.mongodb.net/Contact?retryWrites=true&w=majority"
   )
   .then(app.listen(3000, () => console.log("App is listening on port 3000")))
   .catch((err) => console.log(err));

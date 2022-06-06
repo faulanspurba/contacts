@@ -1,8 +1,9 @@
 const router = require("express").Router();
-const { body } = require("express-validator");
+const { body, check } = require("express-validator");
 
 const {
   contacts,
+  add_contact_view,
   create_contact,
   get_data_by_id,
   edit_contact,
@@ -10,13 +11,16 @@ const {
 } = require("../controllers/contact");
 
 router.get("/contacts", contacts);
+router.get("/add-contact", add_contact_view);
 router.post(
   "/contact",
   [
-    body("name").isLength({ min: 4 }).withMessage("Your Name is too short"),
+    body("name")
+      .isLength({ min: 3 })
+      .withMessage("Minimum 3 characters for name"),
     body("email")
-      .isLength({ min: 10 })
-      .withMessage("Minimum for email is 5 characters"),
+      .isLength({ min: 5 })
+      .withMessage("Minumum 5 characters for email"),
   ],
   create_contact
 );
