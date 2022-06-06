@@ -1,0 +1,45 @@
+<div class="container min">
+  <h1>Data Contacts</h1>
+  <a class="btn btn-success" href="add-contact">Add Contact</a>
+
+  <% if (msg.length != 0) { %>
+  <div class="alert alert-success mt-4 col-md-4 fw-bold" role="alert">
+    <%= msg %>
+  </div>
+  <% } %>
+
+  <table class="table mt-3">
+    <% if (!contacts) { %>
+    <div class="alert alert-danger" role="alert">
+      A simple danger alert—check it out!
+    </div>
+    <% } else{ %>
+    <thead>
+      <tr>
+        <th>No.</th>
+        <th>Name</th>
+        <th>Email</th>
+        <th>No.HP</th>
+        <th>Image</th>
+      </tr>
+    </thead>
+    <tbody>
+      <% contacts.forEach((contact, i) => { %>
+      <tr>
+        <% const number = (per_page*(page-1)+1)+i %>
+        <th><%= number %></th>
+        <td><%= contact.name %></td>
+        <td><%= contact.email %></td>
+        <td><%= contact.phone_number %></td>
+        <td>
+          <img
+            src="http://localhost:3000/images/<%= contact.image %>"
+            style="max-width: 50px"
+          />
+        </td>
+      </tr>
+      <% }); %>
+    </tbody>
+    <% } %>
+  </table>
+</div>
