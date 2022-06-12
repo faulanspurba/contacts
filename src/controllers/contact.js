@@ -17,6 +17,7 @@ exports.contacts = (req, res, next) => {
         .limit(per_page);
     })
     .then((contacts) => {
+      const total_pages = Math.ceil(total_contacts / per_page);
       res.status(200).render("contact", {
         title: "Contacts",
         layout: "layouts/main",
@@ -24,15 +25,9 @@ exports.contacts = (req, res, next) => {
         page,
         per_page,
         total_contacts,
+        total_pages,
         msg: req.flash("msg"),
       });
-      // res.status(200).json({
-      //   message: "Getting All Datas is success",
-      //   data: contacts,
-      //   page,
-      //   per_page,
-      //   total_contacts,
-      // });
     })
     .catch((err) => next(err));
 };
@@ -48,47 +43,29 @@ exports.create_contact = (req, res, next) => {
   const errors = validationResult(req);
 
   if (!errors.isEmpty()) {
-    // const err = new Error(`Something error in your input`);
-    // err.status = 400;
-    // err.data = errors.array();
-    // throw err;
-
     res.render("add_data", {
       title: "Add Data",
       layout: "layouts/main",
       errors: errors.array(),
     });
+  } else {
+    const { name, email, phone_number } = req.body,
+      image = req.file.filename;
 
-    return;
+    const contacts = new Contact({
+      name,
+      email,
+      phone_number,
+      image,
+    });
+    contacts
+      .save()
+      .then((contact) => {
+        req.flash("msg", `Adding ${contact.name} was successful!`);
+        res.status(201).redirect("contacts");
+      })
+      .catch((err) => console.log("err: ", err));
   }
-
-  if (!req.file) {
-    const err = new Error(`Something error in your input`);
-    err.status = 400;
-    err.data = " Error pada bagian req.file";
-    throw err;
-  }
-
-  const { name, email, phone_number } = req.body,
-    image = req.file.filename;
-
-  const contacts = new Contact({
-    name,
-    email,
-    phone_number,
-    image,
-  });
-  contacts
-    .save()
-    .then((result) => {
-      req.flash("msg", `Adding ${result.name} was successful!`);
-      res.status(201).redirect("contacts");
-      // res.status(201).json({
-      //   message: "Creating App is Success",
-      //   data: result,
-      // });
-    })
-    .catch((err) => console.log("err: ", err));
 };
 
 exports.get_data_by_id = (req, res, next) => {
@@ -102,18 +79,21 @@ exports.get_data_by_id = (req, res, next) => {
         throw err;
       }
 
-      res.status(200).json({
-        message: "Contact data found",
-        data: contact,
+      res.status(200).render("edit_data", {
+        title: "Edit Data",
+        layout: "layouts/main",
+        contact,
       });
     })
     .catch((err) => next(err));
 };
 
 exports.edit_contact = (req, res, next) => {
+  const errors = validationResult(req);
+
   const _id = req.params._id,
     { name, email, phone_number } = req.body,
-    image = req.file.path;
+    image = req.file.filename;
 
   Contact.findById(_id)
     .then((contact) => {
@@ -131,10 +111,13 @@ exports.edit_contact = (req, res, next) => {
       return contact.save();
     })
     .then((contact) => {
-      res.status(200).json({
-        message: "Update data is success",
-        data: contact,
-      });
+      req.flash("msg", `Changing ${contact.name} was successful!`);
+      res.status(200).redirect("/v1/user/contacts");
+      // res.status(200).json({
+      //   message: "Update data is success",
+      //   data: contact,
+      //   errors: errors.array(),
+      // });
     })
     .catch((err) => next(err));
 };
@@ -143,22 +126,18 @@ exports.delete_contact = (req, res, next) => {
   const _id = req.params._id;
 
   Contact.findById(_id)
+
     .then((contact) => {
-      removeImage(contact.image);
+      fs.unlink(
+        path.join(`${__dirname}/../../images/${contact.image}`),
+        (err) => console.log(err)
+      );
 
       return Contact.findByIdAndRemove(_id);
     })
     .then((contact) => {
-      res.status(200).json({
-        message: "Deleting data is success",
-        data: contact,
-      });
+      req.flash("msg", "Deleting Contact was Successful");
+      res.status(200).redirect("/v1/user/contacts");
     })
     .catch((err) => next(err));
-
-  const removeImage = (img) => {
-    fs.unlink(path.join(`${__dirname}/../../image/${img}`), (err) =>
-      console.log(err)
-    );
-  };
 };

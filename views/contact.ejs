@@ -21,12 +21,13 @@
         <th>Email</th>
         <th>No.HP</th>
         <th>Image</th>
+        <th></th>
       </tr>
     </thead>
     <tbody>
       <% contacts.forEach((contact, i) => { %>
       <tr>
-        <% const number = (per_page*(page-1)+1)+i %>
+        <% const number = per_page*(page-1)+i+1 %>
         <th><%= number %></th>
         <td><%= contact.name %></td>
         <td><%= contact.email %></td>
@@ -37,9 +38,39 @@
             style="max-width: 50px"
           />
         </td>
+        <td>
+          <button type="submit" class="btn btn-outline-info m-1">
+            <a
+              href="/v1/user/contact/<%= contact._id %>"
+              class="text-decoration-none"
+            >
+              EDIT</a
+            >
+          </button>
+          <form
+            method="POST"
+            action="/v1/user/contact/<%= contact._id %>?_method=DELETE"
+            class="d-inline"
+          >
+            <button
+              type="submit"
+              onclick="return confirm('Sure to delete?')"
+              class="btn btn-outline-danger"
+            >
+              Delete
+            </button>
+          </form>
+        </td>
       </tr>
       <% }); %>
     </tbody>
     <% } %>
   </table>
+  <div class="pagination d-flex justify-content-around m-4">
+    <% for( let index = 1; index <= total_pages; index++ ) { %>
+    <a href="?page=<%= index %> " class="btn btn-outline-primary"
+      ><%= index %>
+    </a>
+    <% } %>
+  </div>
 </div>
